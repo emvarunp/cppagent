@@ -19,6 +19,11 @@
 
 #include "boost/asio/io_context.hpp"
 #include <boost/dll/alias.hpp>
+#include <string>
+
+#include "rapidjson/document.h" 
+#include "rapidjson/prettywriter.h" 
+#include "rapidjson/stringbuffer.h"
 
 #include <nlohmann/json.hpp>
 
@@ -131,7 +136,7 @@ namespace mtconnect {
           }
           return filter->second;
         }
-
+	
         std::string formatTopic(const std::string &topic, const DevicePtr device,
                                 const std::string defaultUuid = "Unknown")
         {
@@ -160,6 +165,39 @@ namespace mtconnect {
           }
           return formatted;
         }
+	
+				//**************************************************************************************
+				void jsonDocParser(const std::string document, std::string topic)
+				{
+					rapidjson::Document doc;
+					doc.Parse(document.c_str());
+					
+					if (!doc.HasParseError() && doc.HasMember("MTConnectStreams") && doc["MTConnectStreams"].HasMember("Streams")) 
+					{ 
+        		const rapidjson::Value& deviceStream = doc["MTConnectStreams"]["Streams"]["DeviceStream"]; 
+        		if (deviceStream.IsArray() && deviceStream.Size() > 0) 
+        		{ 
+            	const rapidjson::Value& componentStreams = deviceStream[0]["ComponentStream"]; 
+            	if (componentStreams.IsArray() && componentStreams.Size() > 0) 
+            	{ 
+                for( auto i = 0; i < componentStreams.Size(); i++)
+                {
+                	const rapidjson::Value& componentStream = componentStreams[i];
+                	std::string comp_id = componentStream["componentId"].GetString();
+                	
+                	rapidjson::StringBuffer buffer; 
+                  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer); 
+                  componentStream.Accept(writer); 
+                  
+                  LOG(info) << "Buffer value: " << buffer.GetString();
+                  LOG(info) << "Generated Topic: " << topic + "/" + comp_id;   
+                  m_client->publish(topic + "/" + comp_id, buffer.GetString());
+                }
+              } 
+            } 
+        	} 
+    		}
+				//**************************************************************************************
 
         std::string getTopic(const std::string &option, int maxTopicDepth)
         {

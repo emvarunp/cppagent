@@ -18,6 +18,7 @@
 #include "mqtt2_service.hpp"
 
 #include <nlohmann/json.hpp>
+#include <string>
 
 #include "mtconnect/configuration/config_options.hpp"
 #include "mtconnect/entity/entity.hpp"
@@ -77,6 +78,8 @@ namespace mtconnect {
              {configuration::MqttLastWillTopic, "MTConnect/Probe/[device]/Availability"s},
              {configuration::CurrentTopic, "MTConnect/Current/[device]"s},
              {configuration::SampleTopic, "MTConnect/Sample/[device]"s},
+             //changed by P
+             //{configuration::DeviceListTopic, "MTConnect/Devicelist"s},
              {configuration::MqttCurrentInterval, 10000ms},
              {configuration::MqttSampleInterval, 500ms},
              {configuration::MqttSampleCount, 1000},
@@ -90,6 +93,7 @@ namespace mtconnect {
         m_assetTopic = getTopic(configuration::AssetTopic, maxTopicDepth);
         m_currentTopic = getTopic(configuration::CurrentTopic, maxTopicDepth);
         m_sampleTopic = getTopic(configuration::SampleTopic, maxTopicDepth);
+       // m_devicelistTopic = getTopic(configuration::
 
         m_currentInterval = *GetOption<Milliseconds>(m_options, configuration::MqttCurrentInterval);
         m_sampleInterval = *GetOption<Milliseconds>(m_options, configuration::MqttSampleInterval);
@@ -184,6 +188,8 @@ namespace mtconnect {
             publish(asset);
           }
         }
+        
+        
 
         auto seq = m_sinkContract->getCircularBuffer().getSequence();
         for (auto &dev : m_sinkContract->getDevices())
@@ -199,7 +205,22 @@ namespace mtconnect {
           });
           sampler->handlerCompleted();
         }
-
+        
+        
+        //changed by prax ************************************************
+        std::vector<std::string> DeviceList;
+	for (const auto &dev : m_sinkContract->getDevices())
+	{
+  	  const auto uuid = *(dev->getUuid());
+  	  DeviceList.push_back(uuid);
+	}
+	
+	LOG(info) << "Device List";
+	for(auto& list: DeviceList)
+	{
+	  LOG(info) << list << " | ";
+	} 
+        //***************************************************************
         publishCurrent(boost::system::error_code {});
       }
 
@@ -262,11 +283,17 @@ namespace mtconnect {
         {
           auto topic = formatTopic(m_currentTopic, device);
           LOG(debug) << "Publishing current for: " << topic;
-
+          
+          //******************************************************************************************
+          
           ObservationList observations;
           SequenceNumber_t firstSeq, seq;
           auto filterSet = filterForDevice(device);
-
+          /*{
+          	//changed by prax
+          	for( auto it = filterSet.begin(); it != filterSet.end(); ++it)
+	  		LOG(info) << "Filterset Data : " << *it;
+	  }*/
           {
             auto &buffer = m_sinkContract->getCircularBuffer();
             std::lock_guard<buffer::CircularBuffer> lock(buffer);
@@ -279,11 +306,15 @@ namespace mtconnect {
 
           auto doc = m_printer->printSample(m_instanceId,
                                             m_sinkContract->getCircularBuffer().getBufferSize(),
+           
                                             seq, firstSeq, seq - 1, observations);
-
-          m_client->publish(topic, doc);
+                                            
+                                            
+          jsonDocParser( doc, topic);                              
+  
+          //m_client->publish(topic, doc);
         }
-
+         
         using std::placeholders::_1;
         m_currentTimer.expires_after(m_currentInterval);
         m_currentTimer.async_wait(boost::asio::bind_executor(
