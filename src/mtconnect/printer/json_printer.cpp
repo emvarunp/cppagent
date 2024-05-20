@@ -346,7 +346,8 @@ namespace mtconnect::printer {
         stack.addObject();
 
         deviceId = ref.getDeviceId();
-
+	LOG(info) << "******************************" << "device ID by Varun:" 
+		  << deviceId;
         auto device = ref.m_device;
         stack.AddPairs("name", *(device->getComponentName()), "uuid", *(device->getUuid()));
 
@@ -362,6 +363,7 @@ namespace mtconnect::printer {
         stack.addObject();
 
         componentId = ref.getComponentId();
+	LOG(info) << "********************************" << "Component ID by Varun:" << componentId;
         auto component = ref.m_component;
         stack.AddPairs("component", component->getName(), "componentId", component->getId());
         if (component->getComponentName())

@@ -102,8 +102,8 @@ namespace mtconnect {
     DECLARE_CONFIGURATION(MqttPassword);
     DECLARE_CONFIGURATION(MqttMaxTopicDepth);
     DECLARE_CONFIGURATION(MqttLastWillTopic);
-    //changed by P
-    DECLARE_CONFIGURATION(DeviceListTopic)
+    //changed by Varun
+    DECLARE_CONFIGURATION(MqttTreeLevel);
     ///@}
 
     /// @name Adapter Configuration

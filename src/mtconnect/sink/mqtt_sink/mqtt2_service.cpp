@@ -207,7 +207,7 @@ namespace mtconnect {
         }
         
         
-        //changed by prax ************************************************
+        /*changed by prax ************************************************
         std::vector<std::string> DeviceList;
 	for (const auto &dev : m_sinkContract->getDevices())
 	{
@@ -220,7 +220,7 @@ namespace mtconnect {
 	{
 	  LOG(info) << list << " | ";
 	} 
-        //***************************************************************
+        //****************************************************************/
         publishCurrent(boost::system::error_code {});
       }
 
@@ -283,9 +283,7 @@ namespace mtconnect {
         {
           auto topic = formatTopic(m_currentTopic, device);
           LOG(debug) << "Publishing current for: " << topic;
-          
-          //******************************************************************************************
-          
+                
           ObservationList observations;
           SequenceNumber_t firstSeq, seq;
           auto filterSet = filterForDevice(device);
@@ -310,9 +308,9 @@ namespace mtconnect {
                                             seq, firstSeq, seq - 1, observations);
                                             
                                             
-          jsonDocParser( doc, topic);                              
+          //jsonDocParser( doc, topic);                              
   
-          //m_client->publish(topic, doc);
+          m_client->publish(topic, doc);
         }
          
         using std::placeholders::_1;
