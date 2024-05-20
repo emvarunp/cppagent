@@ -334,6 +334,11 @@ namespace mtconnect::printer {
     int32_t category = -1;
     std::string_view obsType;
 
+    //Changed
+    int treeLevel = 2;
+    bool compHit = false;
+    //
+
     for (auto &ref : observations)
     {
       if (ref.getDeviceId() != deviceId)
@@ -346,8 +351,6 @@ namespace mtconnect::printer {
         stack.addObject();
 
         deviceId = ref.getDeviceId();
-	LOG(info) << "******************************" << "device ID by Varun:" 
-		  << deviceId;
         auto device = ref.m_device;
         stack.AddPairs("name", *(device->getComponentName()), "uuid", *(device->getUuid()));
 
@@ -356,6 +359,13 @@ namespace mtconnect::printer {
 
       if (ref.getComponentId() != componentId)
       {
+        if( treeLevel == 2 && compHit == true )
+	{
+	  LOG(info) << "json_printer.cpp *************** stringBuffer output = " << output ; 
+
+
+	  compHit = false;
+	}
         stack.clear(2);
         category = -1;
         obsType = "";
@@ -363,11 +373,11 @@ namespace mtconnect::printer {
         stack.addObject();
 
         componentId = ref.getComponentId();
-	LOG(info) << "********************************" << "Component ID by Varun:" << componentId;
-        auto component = ref.m_component;
+	auto component = ref.m_component;
         stack.AddPairs("component", component->getName(), "componentId", component->getId());
         if (component->getComponentName())
           stack.AddPairs("name", *(component->getComponentName()));
+	compHit = true;
       }
 
       if (ref.getCategory() != category)
